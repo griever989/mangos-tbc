@@ -233,7 +233,7 @@ CombatManeuverReturns PlayerbotPaladinAI::DoNextCombatManeuverPVE(Unit* pTarget)
         if (m_ai.IsElite(newTarget))
         {
             // Try to stun the mob
-            if (HAMMER_OF_JUSTICE > 0 && m_ai.In_Reach(newTarget, HAMMER_OF_JUSTICE) && m_bot.IsSpellReady(HAMMER_OF_JUSTICE) && !newTarget->HasAura(HAMMER_OF_JUSTICE) && m_ai.CastSpell(HAMMER_OF_JUSTICE, *newTarget) == SPELL_CAST_OK)
+            if (HAMMER_OF_JUSTICE > 0 && pTarget->GetHealth() > pTarget->GetMaxHealth() * 0.40 && m_ai.In_Reach(newTarget, HAMMER_OF_JUSTICE) && m_bot.IsSpellReady(HAMMER_OF_JUSTICE) && !newTarget->HasAura(HAMMER_OF_JUSTICE) && m_ai.CastSpell(HAMMER_OF_JUSTICE, *newTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
 
             // Bot has low life: use divine powers to protect him/herself
@@ -272,11 +272,14 @@ CombatManeuverReturns PlayerbotPaladinAI::DoNextCombatManeuverPVE(Unit* pTarget)
 
         case PALADIN_SPEC_PROTECTION:
             //Taunt if orders specify
-            if (CONSECRATION > 0 && m_bot.IsSpellReady(CONSECRATION) && m_ai.CastSpell(CONSECRATION, *pTarget) == SPELL_CAST_OK)
-                return RETURN_CONTINUE;
             if (HOLY_SHIELD > 0 && !m_bot.HasAura(HOLY_SHIELD) && m_ai.CastSpell(HOLY_SHIELD, m_bot) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
             if (AVENGERS_SHIELD > 0 && m_bot.IsSpellReady(AVENGERS_SHIELD) && m_ai.CastSpell(AVENGERS_SHIELD, *pTarget) == SPELL_CAST_OK)
+                return RETURN_CONTINUE;
+            // conserve mana if we've already cast important stuff
+            if (m_ai.GetManaPercent() <= 40)
+                return RETURN_NO_ACTION_OK;
+            if (CONSECRATION > 0 && m_bot.IsSpellReady(CONSECRATION) && m_ai.CastSpell(CONSECRATION, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
             if (JUDGEMENT > 0 && m_ai.CastSpell(JUDGEMENT, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
@@ -524,7 +527,7 @@ bool PlayerbotPaladinAI::CheckSealAndJudgement(Unit* target)
     }
 
     // No judgement on target but bot has seal active: time to judge the target
-    if (m_CurrentJudgement == 0 && m_CurrentSeal > 0 && m_bot.HasAura(m_CurrentSeal, EFFECT_INDEX_0))
+    if (m_CurrentJudgement == 0 && m_CurrentSeal > 0 && m_bot.HasAura(m_CurrentSeal, EFFECT_INDEX_0) && (m_ai.GetManaPercent() > 40 || (m_CurrentSeal == SEAL_OF_WISDOM)))
     {
         if (JUDGEMENT > 0 && m_bot.IsSpellReady(JUDGEMENT) && m_ai.In_Reach(target, JUDGEMENT) && m_ai.CastSpell(JUDGEMENT, *target) == SPELL_CAST_OK)
         {

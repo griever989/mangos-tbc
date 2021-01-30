@@ -235,6 +235,21 @@ bool PlayerbotClassAI::FindTargetAndHeal()
 
     if (m_ai.GetClassAI()->HealPlayer(targetToHeal) & RETURN_CONTINUE)
         return true;
+        
+    // If nobody was healed based on ideal target calculation and we have mana, just try to heal anyone else
+    // who needs healing. It's expected that HealPlayer won't actually heal them if they don't need it
+    if (m_ai.GetManaPercent() >= 30)
+    {
+        Group::MemberSlotList const& groupSlot = m_bot.GetGroup()->GetMemberSlots();
+        for (const auto & memberItr : groupSlot)
+        {
+            Player* member = sObjectMgr.GetPlayer(memberItr.guid);
+            if (!member || !member->IsAlive() || member->IsInDuel())
+                continue;
+            if (m_ai.GetClassAI()->HealPlayer(member) & RETURN_CONTINUE)
+                return true;
+        }
+    }
 
     return false;   
 }

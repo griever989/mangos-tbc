@@ -287,9 +287,9 @@ CombatManeuverReturns PlayerbotPriestAI::DoNextCombatManeuverPVE(Unit* pTarget)
         if (m_ai.IsElite(pTarget) && mainTank && mainTank->GetVictim() != pTarget)
             return RETURN_NO_ACTION_OK;
 
-        // Cast Shadow Word:Pain on current target and keep its up (if mana >= 40% or target HP < 15%)
+        // Cast Shadow Word:Pain on current target and keep its up (if mana >= 80% and target HP > 90%)
         if (SHADOW_WORD_PAIN > 0 && !PlayerbotAI::IsImmuneToSchool(pTarget, SPELL_SCHOOL_MASK_SHADOW) && m_ai.In_Reach(pTarget, SHADOW_WORD_PAIN) && !pTarget->HasAura(SHADOW_WORD_PAIN, EFFECT_INDEX_0) &&
-                (pTarget->GetHealthPercent() < 15 || m_ai.GetManaPercent() >= 40) && CastSpell(SHADOW_WORD_PAIN, pTarget))
+                (pTarget->GetHealthPercent() > 90 && m_ai.GetManaPercent() >= 80) && CastSpell(SHADOW_WORD_PAIN, pTarget))
             return RETURN_CONTINUE;
         else // else shoot at it
             return CastSpell(SHOOT, pTarget);
