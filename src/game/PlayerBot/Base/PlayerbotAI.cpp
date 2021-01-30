@@ -5329,24 +5329,6 @@ void PlayerbotAI::UpdateAI(const uint32 /*p_time*/)
             m_lootTargets.clear();
     }
 
-    if (m_botState == BOTSTATE_LOOTING)
-        return DoLoot();
-
-    if (m_botState == BOTSTATE_FLYING)
-    {
-        /* std::ostringstream out;
-        out << "Taxi: " << m_bot->GetName() << m_ignoreAIUpdatesUntilTime;
-        TellMaster(out.str().c_str());*/
-        DoFlight();
-        SetState(BOTSTATE_NORMAL);
-        SetIgnoreUpdateTime(0);
-        return;
-    }
-
-    // if commanded to follow master and not already following master then follow master
-    if (!m_bot->IsInCombat() && m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType() == IDLE_MOTION_TYPE)
-        return MovementReset();
-
     // do class specific non combat actions
     if (GetClassAI() && !m_bot->IsMounted() && !IsRegenerating())
     {
@@ -5369,9 +5351,25 @@ void PlayerbotAI::UpdateAI(const uint32 /*p_time*/)
             if (!m_lootTargets.empty())
                 SetState(BOTSTATE_LOOTING);
         }
+    }
+    
+    if (m_botState == BOTSTATE_LOOTING)
+        return DoLoot();
 
+    if (m_botState == BOTSTATE_FLYING)
+    {
+        /* std::ostringstream out;
+        out << "Taxi: " << m_bot->GetName() << m_ignoreAIUpdatesUntilTime;
+        TellMaster(out.str().c_str());*/
+        DoFlight();
+        SetState(BOTSTATE_NORMAL);
+        SetIgnoreUpdateTime(0);
         return;
     }
+
+    // if commanded to follow master and not already following master then follow master
+    if (!m_bot->IsInCombat() && m_bot->GetMotionMaster()->GetCurrentMovementGeneratorType() == IDLE_MOTION_TYPE)
+        return MovementReset();
 }
 
 Spell* PlayerbotAI::GetCurrentSpell() const
