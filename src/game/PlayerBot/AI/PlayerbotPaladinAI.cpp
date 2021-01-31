@@ -666,23 +666,33 @@ bool PlayerbotPaladinAI::BuffHelper(PlayerbotAI* ai, uint32 spellId, Unit* targe
 
     // See which buff is appropriate according to class
     // TODO: take into account other paladins in the group
+    
+    // cast sanctuary on self if we are a tank and we have it
+    if (c->BLESSING_OF_SANCTUARY > 0 && c->m_ai.IsTank() && target->GetObjectGuid() == c->m_bot.GetObjectGuid())
+    {
+        spellId = c->BLESSING_OF_SANCTUARY;
+    }
+    
     switch (target->getClass())
     {
         case CLASS_DRUID:
         case CLASS_SHAMAN:
         case CLASS_PALADIN:
-            spellId = c->BLESSING_OF_MIGHT;
             if (!spellId)
             {
-                spellId = c->BLESSING_OF_KINGS;
+                spellId = c->BLESSING_OF_MIGHT;
                 if (!spellId)
                 {
-                    spellId = c->BLESSING_OF_WISDOM;
+                    spellId = c->BLESSING_OF_KINGS;
                     if (!spellId)
                     {
-                        spellId = c->BLESSING_OF_SANCTUARY;
+                        spellId = c->BLESSING_OF_WISDOM;
                         if (!spellId)
-                            return false;
+                        {
+                            spellId = c->BLESSING_OF_SANCTUARY;
+                            if (!spellId)
+                                return false;
+                        }
                     }
                 }
             }
