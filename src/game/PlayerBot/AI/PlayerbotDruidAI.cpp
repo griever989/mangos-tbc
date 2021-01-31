@@ -393,10 +393,10 @@ CombatManeuverReturns PlayerbotDruidAI::_DoNextPVECombatManeuverSpellDPS(Unit* p
     // Face enemy, make sure you're attacking
     m_ai.FaceTarget(pTarget);
 
-    if (FAERIE_FIRE > 0 && m_ai.In_Reach(pTarget, FAERIE_FIRE) && !pTarget->HasAura(FAERIE_FIRE, EFFECT_INDEX_0) && CastSpell(FAERIE_FIRE, pTarget))
+    if (FAERIE_FIRE > 0 && (!m_ai.IsHealer() || (m_ai.GetManaPercent() >= 70 && pTarget->GetHealthPercent() >= 80)) && m_ai.In_Reach(pTarget, FAERIE_FIRE) && !pTarget->HasAura(FAERIE_FIRE, EFFECT_INDEX_0) && CastSpell(FAERIE_FIRE, pTarget))
         return RETURN_CONTINUE;
 
-    if (INSECT_SWARM > 0 && m_ai.In_Reach(pTarget, INSECT_SWARM) && !pTarget->HasAura(INSECT_SWARM, EFFECT_INDEX_0) && CastSpell(INSECT_SWARM, pTarget))
+    if (INSECT_SWARM > 0 && (!m_ai.IsHealer() || (m_ai.GetManaPercent() >= 70 && pTarget->GetHealthPercent() >= 80)) && m_ai.In_Reach(pTarget, INSECT_SWARM) && !pTarget->HasAura(INSECT_SWARM, EFFECT_INDEX_0) && CastSpell(INSECT_SWARM, pTarget))
         return RETURN_CONTINUE;
 
     // Healer? Don't waste more mana on DPS
