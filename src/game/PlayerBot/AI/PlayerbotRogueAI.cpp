@@ -305,9 +305,18 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVE(Unit* pTarget)
     // Combo generating or damage increasing attacks
     if (HEMORRHAGE > 0 && !pTarget->HasAura(HEMORRHAGE, EFFECT_INDEX_2) && m_ai.CastSpell(HEMORRHAGE, *pTarget) == SPELL_CAST_OK)
         return RETURN_CONTINUE;
-    if (BACKSTAB > 0 && pTarget->isInBackInMap(&m_bot, 5.0f) && m_ai.CastSpell(BACKSTAB, *pTarget) == SPELL_CAST_OK)
+    // if mainhand weapon is dagger, always try to pool energy to backstab so we don't just sinister strike first
+    if ((BACKSTAB > 0 || MUTILATE > 0) && MainHandWeaponIsDagger() && m_ai.GetEnergyAmount() < 60)
+        return RETURN_NO_ACTION_OK;
+    // always prefer mutilate over backstab if we have it
+    if (MUTILATE > 0 && MainHandWeaponIsDagger() && pTarget->isInBackInMap(&m_bot, 5.0f) && m_ai.CastSpell(MUTILATE, *pTarget) == SPELL_CAST_OK)
+        return RETURN_CONTINUE;
+    if (BACKSTAB > 0 && MainHandWeaponIsDagger() && pTarget->isInBackInMap(&m_bot, 5.0f) && m_ai.CastSpell(BACKSTAB, *pTarget) == SPELL_CAST_OK)
         return RETURN_CONTINUE;
     if (GHOSTLY_STRIKE > 0 && m_bot.IsSpellReady(GHOSTLY_STRIKE) && m_ai.CastSpell(GHOSTLY_STRIKE, *pTarget) == SPELL_CAST_OK)
+        return RETURN_CONTINUE;
+    // always prefer hemo to ss if we have it
+    if (HEMORRHAGE > 0 && m_ai.CastSpell(HEMORRHAGE, *pTarget) == SPELL_CAST_OK)
         return RETURN_CONTINUE;
     if (SINISTER_STRIKE > 0 && m_ai.CastSpell(SINISTER_STRIKE, *pTarget) == SPELL_CAST_OK)
         return RETURN_CONTINUE;
@@ -480,6 +489,17 @@ Item* PlayerbotRogueAI::FindPoison() const
             return poison;
     }
     return nullptr;
+}
+
+bool PlayerbotRogueAI::MainHandWeaponIsDagger() const
+{
+    Item* weapon = m_bot.GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+    if (weapon)
+    {
+        ItemPrototype const* weaponProto = weapon->GetProto();
+        return weaponProto->SubClass == ITEM_SUBCLASS_WEAPON_DAGGER;
+    }
+    return false;
 }
 
 void PlayerbotRogueAI::DoNonCombatActions()

@@ -100,6 +100,7 @@ class PlayerbotRogueAI : PlayerbotClassAI
         CombatManeuverReturns DoFirstCombatManeuverPVP(Unit* pTarget) override;
         CombatManeuverReturns DoNextCombatManeuverPVP(Unit* pTarget) override;
         Item* FindPoison() const;
+        bool MainHandWeaponIsDagger() const;
 
         // COMBAT
         uint32 ADRENALINE_RUSH,
