@@ -172,22 +172,18 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVE(Unit* pTarget)
 
     Unit* pVictim = pTarget->GetVictim();
     bool meleeReach = m_bot.CanReachWithMeleeAttack(pTarget);
-
-    // TODO: make this work better...
-    /*if (pVictim)
-       {
-        if( pVictim!=m_bot && !m_bot.hasUnitState(UNIT_STAT_FOLLOW) && !pTarget->isInBackInMap(m_bot,10) ) {
-            m_ai.TellMaster( "getting behind target" );
-            m_bot.GetMotionMaster()->Clear( true );
-            m_bot.GetMotionMaster()->MoveFollow( pTarget, 1, 2*M_PI );
-        }
-        else if( pVictim==m_bot && m_bot.hasUnitState(UNIT_STAT_FOLLOW) )
+    bool daggerRogue = MainHandWeaponIsDagger();
+    bool behindTarget = pTarget->isInBackInMap(&m_bot, 5.0f);
+    
+    // if we have positional attacks then try to get behind the target to use them
+    if ((BACKSTAB > 0 || MUTILATE > 0) && daggerRogue && meleeReach && !behindTarget)
+    {
+        if (!pVictim || pVictim != &static_cast<Unit&>(m_bot))
         {
-            m_ai.TellMaster( "chasing attacking target" );
-            m_bot.GetMotionMaster()->Clear( true );
-            m_bot.GetMotionMaster()->MoveChase( pTarget );
+            m_bot.GetMotionMaster()->MoveFollow(pTarget, 2, M_PI_F);
+            return RETURN_CONTINUE;
         }
-       }*/
+    }
 
     // If bot is stealthed: pre-combat actions
     if (m_bot.HasAura(STEALTH, EFFECT_INDEX_0))
@@ -196,11 +192,11 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVE(Unit* pTarget)
             return RETURN_CONTINUE;
         if (PREMEDITATION > 0 && m_ai.CastSpell(PREMEDITATION, *pTarget) == SPELL_CAST_OK)
             return RETURN_CONTINUE;
-        if (AMBUSH > 0 && pTarget->isInBackInMap(&m_bot, 5.0f) && m_ai.CastSpell(AMBUSH, *pTarget) == SPELL_CAST_OK)
+        if (AMBUSH > 0 && daggerRogue && behindTarget && m_ai.CastSpell(AMBUSH, *pTarget) == SPELL_CAST_OK)
             return RETURN_CONTINUE;
         if (CHEAP_SHOT > 0 && !pTarget->HasAura(CHEAP_SHOT, EFFECT_INDEX_0) && m_ai.CastSpell(CHEAP_SHOT, *pTarget) == SPELL_CAST_OK)
             return RETURN_CONTINUE;
-        if (GARROTE > 0 && pTarget->isInBackInMap(&m_bot, 5.0f) && m_ai.CastSpell(GARROTE, *pTarget) == SPELL_CAST_OK)
+        if (GARROTE > 0 && behindTarget && m_ai.CastSpell(GARROTE, *pTarget) == SPELL_CAST_OK)
             return RETURN_CONTINUE;
 
         // No appropriate action found, remove stealth
@@ -306,12 +302,12 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVE(Unit* pTarget)
     if (HEMORRHAGE > 0 && !pTarget->HasAura(HEMORRHAGE, EFFECT_INDEX_2) && m_ai.CastSpell(HEMORRHAGE, *pTarget) == SPELL_CAST_OK)
         return RETURN_CONTINUE;
     // if mainhand weapon is dagger, always try to pool energy to backstab so we don't just sinister strike first
-    if ((BACKSTAB > 0 || MUTILATE > 0) && MainHandWeaponIsDagger() && m_ai.GetEnergyAmount() < 60)
+    if ((BACKSTAB > 0 || MUTILATE > 0) && daggerRogue && m_ai.GetEnergyAmount() < 60)
         return RETURN_NO_ACTION_OK;
     // always prefer mutilate over backstab if we have it
-    if (MUTILATE > 0 && MainHandWeaponIsDagger() && pTarget->isInBackInMap(&m_bot, 5.0f) && m_ai.CastSpell(MUTILATE, *pTarget) == SPELL_CAST_OK)
+    if (MUTILATE > 0 && daggerRogue && behindTarget && m_ai.CastSpell(MUTILATE, *pTarget) == SPELL_CAST_OK)
         return RETURN_CONTINUE;
-    if (BACKSTAB > 0 && MainHandWeaponIsDagger() && pTarget->isInBackInMap(&m_bot, 5.0f) && m_ai.CastSpell(BACKSTAB, *pTarget) == SPELL_CAST_OK)
+    if (BACKSTAB > 0 && daggerRogue && behindTarget && m_ai.CastSpell(BACKSTAB, *pTarget) == SPELL_CAST_OK)
         return RETURN_CONTINUE;
     if (GHOSTLY_STRIKE > 0 && m_bot.IsSpellReady(GHOSTLY_STRIKE) && m_ai.CastSpell(GHOSTLY_STRIKE, *pTarget) == SPELL_CAST_OK)
         return RETURN_CONTINUE;
@@ -330,6 +326,14 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVP(Unit* pTarget)
 
     Unit* pVictim = pTarget->GetVictim();
     bool meleeReach = m_bot.CanReachWithMeleeAttack(pTarget);
+    bool behindTarget = pTarget->isInBackInMap(&m_bot, 5.0f);
+    
+    // go behind the target because we're a rogue
+    if (meleeReach && !behindTarget)
+    {
+        m_bot.GetMotionMaster()->MoveFollow(pTarget, 2, M_PI_F);
+        return RETURN_CONTINUE;
+    }
 
     // decide what to do:
     if (pVictim == &m_bot && CLOAK_OF_SHADOWS > 0 && m_bot.HasAura(SPELL_AURA_PERIODIC_DAMAGE) && !m_bot.HasAura(CLOAK_OF_SHADOWS, EFFECT_INDEX_0) && m_ai.CastSpell(CLOAK_OF_SHADOWS) == SPELL_CAST_OK)
@@ -349,6 +353,8 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVP(Unit* pTarget)
     // we fight in melee, target is not in range, skip the next part!
     if (!meleeReach)
         return RETURN_CONTINUE;
+        
+    bool daggerRogue = MainHandWeaponIsDagger();
 
     std::ostringstream out;
     switch (SpellSequence)
@@ -356,11 +362,11 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVP(Unit* pTarget)
         case RogueStealth:
             if (PREMEDITATION > 0 && m_ai.CastSpell(PREMEDITATION, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
-            if (AMBUSH > 0 && m_ai.CastSpell(AMBUSH, *pTarget) == SPELL_CAST_OK)
+            if (AMBUSH > 0 && daggerRogue && behindTarget && m_ai.CastSpell(AMBUSH, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
             if (CHEAP_SHOT > 0 && !pTarget->HasAura(CHEAP_SHOT, EFFECT_INDEX_0) && m_ai.CastSpell(CHEAP_SHOT, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
-            if (GARROTE > 0 && m_ai.CastSpell(GARROTE, *pTarget) == SPELL_CAST_OK)
+            if (GARROTE > 0 && behindTarget && m_ai.CastSpell(GARROTE, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
 
             // No appropriate action found, remove stealth
@@ -440,17 +446,21 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVP(Unit* pTarget)
 
             if (CHEAP_SHOT > 0 && !pTarget->HasAura(CHEAP_SHOT, EFFECT_INDEX_0) && m_ai.CastSpell(CHEAP_SHOT, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
-            if (AMBUSH > 0 && m_ai.CastSpell(AMBUSH, *pTarget) == SPELL_CAST_OK)
+            if (AMBUSH > 0 && daggerRogue && behindTarget && m_ai.CastSpell(AMBUSH, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
-            if (GARROTE > 0 && m_ai.CastSpell(GARROTE, *pTarget) == SPELL_CAST_OK)
+            if (GARROTE > 0 && behindTarget && m_ai.CastSpell(GARROTE, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
-            if (BACKSTAB > 0 && pTarget->isInBackInMap(&m_bot, 1) && m_ai.CastSpell(BACKSTAB, *pTarget) == SPELL_CAST_OK)
+            if (MUTILATE > 0 && daggerRogue && behindTarget && m_ai.CastSpell(MUTILATE, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
-            if (SINISTER_STRIKE > 0 && m_ai.CastSpell(SINISTER_STRIKE, *pTarget) == SPELL_CAST_OK)
+            if (BACKSTAB > 0 && daggerRogue && behindTarget && m_ai.CastSpell(BACKSTAB, *pTarget) == SPELL_CAST_OK)
+                return RETURN_CONTINUE;
+            // only sinister strike or hemo as daggers if we are about to energy cap because we should be able to
+            // get behind the target in most cases unless we are being heavily kited
+            if (HEMORRHAGE > 0 && (!daggerRogue || m_ai.GetEnergyAmount() > 80) && m_ai.CastSpell(HEMORRHAGE, *pTarget) == SPELL_CAST_OK)
+                return RETURN_CONTINUE;
+            if (SINISTER_STRIKE > 0 && (!daggerRogue || m_ai.GetEnergyAmount() > 80) && m_ai.CastSpell(SINISTER_STRIKE, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
             if (GHOSTLY_STRIKE > 0 && m_ai.CastSpell(GHOSTLY_STRIKE, *pTarget) == SPELL_CAST_OK)
-                return RETURN_CONTINUE;
-            if (HEMORRHAGE > 0 && m_ai.CastSpell(HEMORRHAGE, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
             if (SHADOWSTEP > 0 && m_ai.CastSpell(SHADOWSTEP, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
