@@ -176,7 +176,7 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVE(Unit* pTarget)
     bool behindTarget = pTarget->isInBackInMap(&m_bot, 5.0f);
     
     // if we have positional attacks then try to get behind the target to use them
-    if ((BACKSTAB > 0 || MUTILATE > 0) && daggerRogue && meleeReach && !behindTarget)
+    if (BACKSTAB > 0 && daggerRogue && meleeReach && !behindTarget)
     {
         if (!pVictim || pVictim != &static_cast<Unit&>(m_bot))
         {
@@ -302,11 +302,8 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVE(Unit* pTarget)
     if (HEMORRHAGE > 0 && !pTarget->HasAura(HEMORRHAGE, EFFECT_INDEX_2) && m_ai.CastSpell(HEMORRHAGE, *pTarget) == SPELL_CAST_OK)
         return RETURN_CONTINUE;
     // if mainhand weapon is dagger, always try to pool energy to backstab so we don't just sinister strike first
-    if ((BACKSTAB > 0 || MUTILATE > 0) && daggerRogue && m_ai.GetEnergyAmount() < 60)
+    if (BACKSTAB > 0 && daggerRogue && m_ai.GetEnergyAmount() < 60)
         return RETURN_NO_ACTION_OK;
-    // always prefer mutilate over backstab if we have it
-    if (MUTILATE > 0 && daggerRogue && behindTarget && m_ai.CastSpell(MUTILATE, *pTarget) == SPELL_CAST_OK)
-        return RETURN_CONTINUE;
     if (BACKSTAB > 0 && daggerRogue && behindTarget && m_ai.CastSpell(BACKSTAB, *pTarget) == SPELL_CAST_OK)
         return RETURN_CONTINUE;
     if (GHOSTLY_STRIKE > 0 && m_bot.IsSpellReady(GHOSTLY_STRIKE) && m_ai.CastSpell(GHOSTLY_STRIKE, *pTarget) == SPELL_CAST_OK)
@@ -449,8 +446,6 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVP(Unit* pTarget)
             if (AMBUSH > 0 && daggerRogue && behindTarget && m_ai.CastSpell(AMBUSH, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
             if (GARROTE > 0 && behindTarget && m_ai.CastSpell(GARROTE, *pTarget) == SPELL_CAST_OK)
-                return RETURN_CONTINUE;
-            if (MUTILATE > 0 && daggerRogue && behindTarget && m_ai.CastSpell(MUTILATE, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
             if (BACKSTAB > 0 && daggerRogue && behindTarget && m_ai.CastSpell(BACKSTAB, *pTarget) == SPELL_CAST_OK)
                 return RETURN_CONTINUE;
