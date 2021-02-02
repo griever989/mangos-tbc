@@ -175,8 +175,10 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVE(Unit* pTarget)
     bool daggerRogue = MainHandWeaponIsDagger();
     bool behindTarget = pTarget->isInBackInMap(&m_bot, 5.0f);
     
-    // if we have positional attacks then try to get behind the target to use them
-    if (BACKSTAB > 0 && daggerRogue && meleeReach && !behindTarget)
+    // if we have positional attacks then try to get behind the target to use
+    // them as long as we aren't going to energy cap (in which case, just move
+    // on to attack logic)
+    if (BACKSTAB > 0 && daggerRogue && meleeReach && !behindTarget && m_ai.GetEnergyAmount() <= (m_ai.GetMaxEnergy() - 20))
     {
         if (!pVictim || pVictim != &static_cast<Unit&>(m_bot))
         {
@@ -325,8 +327,10 @@ CombatManeuverReturns PlayerbotRogueAI::DoNextCombatManeuverPVP(Unit* pTarget)
     bool meleeReach = m_bot.CanReachWithMeleeAttack(pTarget);
     bool behindTarget = pTarget->isInBackInMap(&m_bot, 5.0f);
     
-    // go behind the target because we're a rogue
-    if (meleeReach && !behindTarget)
+    // Go behind the target because we're a rogue
+    // Try to do this as long as we aren't going to energy cap (in which case,
+    // just move on to attack logic, because we could be getting kited).
+    if (meleeReach && !behindTarget && m_ai.GetEnergyAmount() <= (m_ai.GetMaxEnergy() - 20))
     {
         m_bot.GetMotionMaster()->MoveFollow(pTarget, 2, M_PI_F);
         return RETURN_CONTINUE;

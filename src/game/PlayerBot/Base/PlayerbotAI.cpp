@@ -2722,6 +2722,16 @@ uint8 PlayerbotAI::GetEnergyAmount() const
     return GetEnergyAmount(*m_bot);
 }
 
+uint8 PlayerbotAI::GetMaxEnergy(const Unit& target) const
+{
+    return (static_cast<float>(target.GetMaxPower(POWER_ENERGY)));
+}
+
+uint8 PlayerbotAI::GetMaxEnergy() const
+{
+    return GetMaxEnergy(*m_bot);
+}
+
 bool PlayerbotAI::HasAura(uint32 spellId, const Unit& player) const
 {
     if (spellId <= 0)

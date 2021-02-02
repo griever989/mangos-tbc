@@ -497,6 +497,8 @@ class PlayerbotAI
         uint8 GetRageAmount() const;
         uint8 GetEnergyAmount(const Unit& target) const;
         uint8 GetEnergyAmount() const;
+        uint8 GetMaxEnergy(const Unit& target) const;
+        uint8 GetMaxEnergy() const;
 
         Item* FindFood() const;
         Item* FindDrink() const;
